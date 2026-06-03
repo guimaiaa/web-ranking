@@ -151,7 +151,7 @@ function renderRanking(scores, iterations) {
 
   indexed.forEach((entry, pos) => {
     const li = document.createElement('li');
-    li.className = 'rank-item';
+    li.className = pos === 0 ? 'rank-item rank-first' : 'rank-item';
     li.style.animationDelay = `${pos * 60}ms`;
 
     const posClass = pos === 0 ? 'gold' : pos === 1 ? 'silver' : pos === 2 ? 'bronze' : 'other';
@@ -165,7 +165,7 @@ function renderRanking(scores, iterations) {
           <div class="rank-bar-bg">
             <div class="rank-bar" style="width:0%" data-pct="${pct}"></div>
           </div>
-          <div class="rank-score">${(entry.s * 100).toFixed(2)}%</div>
+          <div class="rank-score" data-score="${(entry.s * 100).toFixed(6)}">0.00%</div>
         </div>
       </div>
     `;
@@ -175,6 +175,17 @@ function renderRanking(scores, iterations) {
   requestAnimationFrame(() => {
     document.querySelectorAll('.rank-bar').forEach(bar => {
       bar.style.width = bar.dataset.pct + '%';
+    });
+    document.querySelectorAll('.rank-score').forEach(el => {
+      const target = parseFloat(el.dataset.score);
+      const t0 = performance.now();
+      const dur = 750;
+      (function tick(now) {
+        const p = Math.min((now - t0) / dur, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        el.textContent = (target * ease).toFixed(2) + '%';
+        if (p < 1) requestAnimationFrame(tick);
+      })(t0);
     });
   });
 }
@@ -198,6 +209,8 @@ function drawGraph(scores) {
   const cy     = H / 2;
   const radius = Math.min(W, H) * 0.36;
 
+  svg.style.opacity = '0';
+  svg.style.transition = 'opacity .5s ease';
   svg.innerHTML = '';
 
   const pos = Array.from({ length: n }, (_, i) => {
@@ -267,6 +280,7 @@ function drawGraph(scores) {
 
     svg.appendChild(g);
   }
+  requestAnimationFrame(() => requestAnimationFrame(() => { svg.style.opacity = '1'; }));
 }
 
 function drawEdge(svg, from, to, r1, r2, bidir) {
@@ -375,6 +389,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   slider.addEventListener('input', updateSlider);
   updateSlider();
+
+  const themeBtn = document.getElementById('btn-theme');
+  const root = document.documentElement;
+  function setTheme(dark) {
+    root.setAttribute('data-theme', dark ? 'dark' : '');
+    localStorage.setItem('pr-theme', dark ? 'dark' : 'light');
+  }
+  const saved = localStorage.getItem('pr-theme');
+  setTheme(saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches);
+  themeBtn.addEventListener('click', () => setTheme(root.getAttribute('data-theme') !== 'dark'));
 
   document.getElementById('btn-clear').addEventListener('click', () => {
     adj = Array.from({ length: n }, () => new Array(n).fill(0));
