@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PageRank – Rankeamento de Sites</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </div>
+      <div>
+        <h1>PageRank</h1>
+        <p>Rankeamento de sites por matriz de adjacência</p>
+      </div>
+      <div class="badge">Álgebra Linear</div>
+    </div>
+  </header>
+
+  <main>
+
+    <aside class="panel left">
+
+      <div class="card">
+        <div class="card-title">Parâmetros</div>
+
+        <label class="field">
+          <span>Número de páginas</span>
+          <div class="stepper">
+            <button id="btn-dec" aria-label="Diminuir">−</button>
+            <input id="n-input" type="number" value="4" min="2" max="12" />
+            <button id="btn-inc" aria-label="Aumentar">+</button>
+          </div>
+        </label>
+
+        <label class="field">
+          <span>Fator de amortecimento <em id="d-val">0.85</em></span>
+          <input id="d-slider" type="range" min="0.50" max="0.99" step="0.01" value="0.85" />
+        </label>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Nomes das páginas</div>
+        <div id="names-grid" class="names-grid"></div>
+      </div>
+
+      <div class="card matrix-card">
+        <div class="card-title">
+          Matriz de adjacência
+          <span class="hint-tag">clique para alternar</span>
+        </div>
+        <p class="matrix-legend">
+          <span class="cell-demo c1">1</span> = link existe &nbsp;
+          <span class="cell-demo c0">0</span> = sem link
+        </p>
+        <div id="matrix-wrap" class="matrix-wrap"></div>
+        <div class="actions">
+          <button class="btn ghost" id="btn-clear">Limpar</button>
+          <button class="btn ghost" id="btn-example">Exemplo</button>
+          <button class="btn primary" id="btn-calc">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Calcular
+          </button>
+        </div>
+      </div>
+
+    </aside>
+
+    <section class="panel right">
+
+      <div class="card results-card">
+        <div class="card-title">
+          Ranking
+          <span id="iters-badge" class="iters-badge hidden"></span>
+        </div>
+        <div id="placeholder" class="placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 8 12 12 14 14"/>
+          </svg>
+          <p>Configure a matriz e clique em <strong>Calcular</strong></p>
+        </div>
+        <ol id="ranking-list" class="ranking-list hidden"></ol>
+      </div>
+
+      <div class="card graph-card">
+        <div class="card-title">Grafo da rede</div>
+        <div class="graph-wrap">
+          <svg id="graph-svg"></svg>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
