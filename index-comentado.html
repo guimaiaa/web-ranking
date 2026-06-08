@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<!-- define o idioma como pt-BR para acessibilidade e hifenização correta -->
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <!-- UTF-8 suporta caracteres especiais do português como ã, é, ó -->
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- sem essa meta tag o mobile renderiza a página como desktop e mostra tudo minúsculo -->
+
+  <title>PageRank – Rankeamento de Sites</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <!-- CSS no head para o browser conhecer os estilos antes de pintar a tela,
+       evitando o flash de conteúdo sem estilo (FOUC) -->
+</head>
+
+<body>
+
+  <!-- cabeçalho fixo no topo (sticky), visível mesmo ao rolar a página -->
+  <header>
+    <div class="header-inner">
+      <!-- header-inner limita a largura máxima a 1200px e centraliza o conteúdo -->
+
+      <!-- ícone de lupa em SVG inline: herda a cor do texto via currentColor
+           e não precisa de arquivo externo nem requisição HTTP -->
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </div>
+
+      <div>
+        <h1>PageRank</h1>
+        <p>Rankeamento de sites por matriz de adjacência</p>
+      </div>
+
+      <div class="badge">Álgebra Linear</div>
+
+      <!-- botão de alternar tema claro/escuro.
+           aria-label descreve a ação para leitores de tela.
+           o CSS controla qual ícone fica visível com base em [data-theme="dark"] -->
+      <button id="btn-theme" class="theme-toggle" aria-label="Alternar tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+
+  <!-- layout principal em duas colunas via CSS Grid:
+       - esquerda (.left): inputs e matriz — largura fixa de 380px
+       - direita (.right): resultados e grafo — ocupa o restante (1fr)
+       em telas menores que 860px as colunas viram uma só (responsivo) -->
+  <main>
+
+    <!-- painel esquerdo: usa <aside> porque é complementar ao conteúdo principal -->
+    <aside class="panel left">
+
+      <!-- card de parâmetros: controla o número de páginas e o fator de amortecimento -->
+      <div class="card">
+        <div class="card-title">Parâmetros</div>
+
+        <!-- stepper para o número de páginas: botões +/− em volta de um input numérico -->
+        <label class="field">
+          <span>Número de páginas</span>
+          <div class="stepper">
+            <button id="btn-dec" aria-label="Diminuir">−</button>
+            <input id="n-input" type="number" value="4" min="2" max="12" />
+            <button id="btn-inc" aria-label="Aumentar">+</button>
+          </div>
+        </label>
+
+        <!-- slider do fator de amortecimento d.
+             d=0.85 é o valor do artigo original do Google (Brin & Page, 1998).
+             valores mais altos dão mais peso aos links; mais baixos distribuem mais uniformemente.
+             o <em id="d-val"> exibe o valor atual e é atualizado em tempo real pelo JS -->
+        <label class="field">
+          <span>Fator de amortecimento <em id="d-val">0.85</em></span>
+          <input id="d-slider" type="range" min="0.50" max="0.99" step="0.01" value="0.85" />
+        </label>
+      </div>
+
+
+      <!-- card dos nomes das páginas.
+           #names-grid começa vazio — o JS preenche com os inputs conforme o valor de n -->
+      <div class="card">
+        <div class="card-title">Nomes das páginas</div>
+        <div id="names-grid" class="names-grid"></div>
+      </div>
+
+
+      <!-- card da matriz de adjacência.
+           #matrix-wrap também começa vazio — o JS injeta a tabela clicável -->
+      <div class="card matrix-card">
+        <div class="card-title">
+          Matriz de adjacência
+          <span class="hint-tag">clique para alternar</span>
+        </div>
+
+        <!-- legenda explicando os valores 0 e 1 -->
+        <p class="matrix-legend">
+          <span class="cell-demo c1">1</span> = link existe &nbsp;
+          <span class="cell-demo c0">0</span> = sem link
+        </p>
+
+        <div id="matrix-wrap" class="matrix-wrap"></div>
+
+        <div class="actions">
+          <button class="btn ghost" id="btn-clear">Limpar</button>
+          <button class="btn ghost" id="btn-example">Exemplo</button>
+          <!-- botão principal com ícone de play e animação de brilho pulsante no CSS -->
+          <button class="btn primary" id="btn-calc">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Calcular
+          </button>
+        </div>
+      </div>
+
+    </aside>
+
+
+    <!-- painel direito: usa <section> porque é o conteúdo principal (os resultados) -->
+    <section class="panel right">
+
+      <!-- card do ranking.
+           o placeholder é exibido antes de qualquer cálculo.
+           depois do cálculo o JS esconde o placeholder e mostra a lista ordenada -->
+      <div class="card results-card">
+        <div class="card-title">
+          Ranking
+          <!-- badge que mostra quantas iterações o algoritmo usou para convergir.
+               começa escondido com a classe "hidden" e aparece após o cálculo -->
+          <span id="iters-badge" class="iters-badge hidden"></span>
+        </div>
+
+        <div id="placeholder" class="placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 8 12 12 14 14"/>
+          </svg>
+          <p>Configure a matriz e clique em <strong>Calcular</strong></p>
+        </div>
+
+        <!-- lista ordenada do ranking — <ol> é semanticamente correto para rankings.
+             começa escondida e é preenchida e exibida pelo JS após o cálculo -->
+        <ol id="ranking-list" class="ranking-list hidden"></ol>
+      </div>
+
+
+      <!-- card do grafo SVG.
+           o <svg> começa vazio e é desenhado inteiramente pelo JS:
+           nós em coordenadas polares, arestas como curvas de Bézier -->
+      <div class="card graph-card">
+        <div class="card-title">Grafo da rede</div>
+        <div class="graph-wrap">
+          <svg id="graph-svg"></svg>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- script no final do body: garante que todos os elementos HTML já existem
+       quando o JS tentar acessá-los, e não bloqueia a renderização da página -->
+  <script src="app-comentado.js"></script>
+
+</body>
+</html>
