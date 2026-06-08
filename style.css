@@ -111,7 +111,7 @@ main {
   padding: 0 1.5rem 2rem;
   align-items: start;
 }
-.panel { display: flex; flex-direction: column; gap: 1.1rem; }
+.panel { display: flex; flex-direction: column; gap: 1.1rem; min-width: 0; }
 
 .card {
   background: var(--card);
@@ -274,30 +274,31 @@ input[type=range]::-webkit-slider-thumb {
 .matrix-wrap { overflow-x: auto; }
 .matrix-table {
   border-collapse: separate;
-  border-spacing: 4px;
-  font-size: .8rem;
+  border-spacing: var(--gap, 4px);
+  font-size: var(--cell-font, .8rem);
+  table-layout: fixed;
+  max-width: 100%;
 }
 .matrix-table th {
   font-weight: 600;
   color: var(--muted);
-  padding: .3rem .5rem;
+  padding: var(--th-pad, .3rem .5rem);
   text-align: center;
   white-space: nowrap;
-  max-width: 60px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .matrix-table th.row-header {
   text-align: right;
-  padding-right: .6rem;
+  padding-right: var(--rh-pr, .6rem);
 }
 .matrix-cell {
-  width: 36px; height: 36px;
-  border-radius: 7px;
+  width: var(--cell, 36px); height: var(--cell, 36px);
+  border-radius: var(--cell-r, 7px);
   border: none;
   cursor: pointer;
   font-weight: 700;
-  font-size: .85rem;
+  font-size: var(--cell-font, .85rem);
   transition: transform .1s, box-shadow .1s, background .15s, color .15s;
   user-select: none;
 }

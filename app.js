@@ -71,14 +71,57 @@ function renderNames() {
 
 function renderMatrix() {
   const wrap = document.getElementById('matrix-wrap');
+
+  // Reliable available width — clientWidth is 0 before first paint on some browsers
+  const availW = (() => {
+    const cw = wrap.clientWidth || wrap.offsetWidth;
+    if (cw > 50) return cw;
+    const vw = window.innerWidth;
+    if (vw > 860) return 337; // desktop: 380px panel minus card padding
+    const mp = vw <= 500 ? 24 : 48; // main padding L+R
+    return Math.max(200, vw - mp - 43); // minus card padding
+  })();
+
+  const gap = n >= 10 ? 2 : n >= 7 ? 3 : 4;
+
+  // Solve for cellSize where: idealHeader(=1.2×cell) + n×cell + (n+2)×gap = availW
+  const rawCell  = Math.floor((availW - (n + 2) * gap) / (n + 1.2));
+  const cellSize = Math.max(16, Math.min(36, rawCell));
+
+  // Cap headerW proportionally — don't let it absorb all leftover when cellSize is maxed
+  const leftover   = availW - n * cellSize - (n + 2) * gap;
+  const headerW    = Math.max(24, Math.min(Math.round(cellSize * 1.2), leftover));
+  const tableW     = headerW + n * cellSize + (n + 2) * gap;
+
+  const cellFont = cellSize >= 30 ? '.80rem' : cellSize >= 24 ? '.74rem' : cellSize >= 20 ? '.68rem' : '.62rem';
+  const cellR    = cellSize >= 30 ? 7 : cellSize >= 24 ? 6 : 5;
+  const thPad    = cellSize >= 28 ? '.3rem .5rem' : cellSize >= 22 ? '.2rem .3rem' : '.12rem .15rem';
+  const rhPr     = cellSize >= 28 ? '.6rem' : cellSize >= 22 ? '.4rem' : '.25rem';
+
+  wrap.style.setProperty('--cell',      cellSize + 'px');
+  wrap.style.setProperty('--gap',       gap      + 'px');
+  wrap.style.setProperty('--cell-font', cellFont);
+  wrap.style.setProperty('--cell-r',    cellR    + 'px');
+  wrap.style.setProperty('--th-pad',    thPad);
+  wrap.style.setProperty('--rh-pr',     rhPr);
+
+  const colMax = cellSize >= 28 ? 5 : cellSize >= 22 ? 3 : 2;
+  const rowMax = headerW  >= 48 ? 7 : headerW  >= 36 ? 5 : headerW >= 26 ? 4 : 3;
+  const trunc  = (name, max) => name.length > max ? name.slice(0, max - 1) + '…' : name;
+
   const table = document.createElement('table');
   table.className = 'matrix-table';
+  // Explicit width required for table-layout:fixed to enforce column widths
+  table.style.width = tableW + 'px';
 
   const headRow = document.createElement('tr');
-  headRow.appendChild(document.createElement('th'));
+  const cornerTh = document.createElement('th');
+  cornerTh.style.width = headerW + 'px';
+  headRow.appendChild(cornerTh);
   for (let j = 0; j < n; j++) {
     const th = document.createElement('th');
-    th.textContent = shortName(names[j]);
+    th.style.width = cellSize + 'px';
+    th.textContent = trunc(names[j], colMax);
     th.title = names[j];
     headRow.appendChild(th);
   }
@@ -88,7 +131,7 @@ function renderMatrix() {
     const tr = document.createElement('tr');
     const th = document.createElement('th');
     th.className = 'row-header';
-    th.textContent = shortName(names[i]);
+    th.textContent = trunc(names[i], rowMax);
     th.title = names[i];
     tr.appendChild(th);
 
@@ -129,7 +172,7 @@ function toggleCell(e) {
 }
 
 function shortName(name) {
-  return name.length > 6 ? name.slice(0, 5) + '…' : name;
+  return name.length > 7 ? name.slice(0, 6) + '…' : name;
 }
 
 function renderRanking(scores, iterations) {
@@ -375,6 +418,12 @@ document.addEventListener('DOMContentLoaded', () => {
   initState(4);
   renderNames();
   renderMatrix();
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderMatrix, 120);
+  });
 
   document.getElementById('btn-dec').addEventListener('click', () => setN(n - 1));
   document.getElementById('btn-inc').addEventListener('click', () => setN(n + 1));
